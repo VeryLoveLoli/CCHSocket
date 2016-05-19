@@ -17,7 +17,7 @@ Pod::Spec.new do |s|
 
   s.name         = "CCHSocket"
   s.version      = "0.0.1"
-  s.summary      = "A short description of CCHSocket."
+  s.summary      = "CCHSocket swift socket"
 
   # This description is used to generate tags and improve search results.
   #   * Think: What does it do? Why did you write it? What is the focus?
@@ -25,7 +25,7 @@ Pod::Spec.new do |s|
   #   * Write the description between the DESC delimiters below.
   #   * Finally, don't worry about the indent, CocoaPods strips it!
   s.description  = <<-DESC
-                    CCHSocket
+                    CCHSocket swift socket TCP/UDP
                    DESC
 
   s.homepage     = "https://github.com/VeryLoveLoli/CCHSocket"
