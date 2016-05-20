@@ -195,7 +195,7 @@ class CCHSocketServer : CCHSocketTCP  {
      
      - parameter block: 客户端连接结果; client:客户端连接端
      */
-    func listeners(block: (client: CCHSockClient)->Void ) -> Void {
+    func listeners(block: (client: CCHSocketClient)->Void ) -> Void {
         
         dispatch_async(CCHSocketQueue.concurrent_queue, {
             
@@ -217,7 +217,7 @@ class CCHSocketServer : CCHSocketTCP  {
                         let address = Address.sockaddrToAddressSring(client_addr)
                         print("socket_id:\(self.socket_id) 接收到 \(address.ip):\(address.port) 的连接")
                         
-                        let client = CCHSockClient.init(socketId: client_id, connectType: self.TYPE)
+                        let client = CCHSocketClient.init(socketId: client_id, connectType: self.TYPE)
                         
                         block(client: client)
                     }
@@ -232,7 +232,7 @@ class CCHSocketServer : CCHSocketTCP  {
     
 }
 
-class CCHSockClient: CCHSocketTCP {
+class CCHSocketClient: CCHSocketTCP {
     
     /// 缓冲区大小
     var buffer_max_length = 1024

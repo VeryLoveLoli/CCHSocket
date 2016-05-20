@@ -14,9 +14,9 @@ class ViewController: UIViewController {
     ///服务端
     var server : CCHSocketServer!
     ///客户连接端
-    var server_1 : CCHSockClient!
+    var server_1 : CCHSocketClient!
     ///客户端
-    var client : CCHSockClient!
+    var client : CCHSocketClient!
     
     var UDP_1 : CCHSocketUDP!
     var UDP_2 : CCHSocketUDP!
@@ -52,7 +52,7 @@ class ViewController: UIViewController {
             })
         }
         
-        client = CCHSockClient()
+        client = CCHSocketClient()
         
         ///连接服务端
         client.connection(server.address_ip, port: server.address_port) { (status, code) in
