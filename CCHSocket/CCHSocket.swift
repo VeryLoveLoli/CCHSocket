@@ -259,6 +259,10 @@ class CCHSockClient: CCHSocketTCP {
             
             if status == 0 {
                 
+                let addr = Address.sockname(self.socket_id)
+                self.IP = addr.ip
+                self.PORT = addr.port
+                
                 print("socket_id:\(self.socket_id) 连接 \(ip):\(port) 成功")
             }
             else {
@@ -529,11 +533,23 @@ class Address {
         x0 = x0 > 127 ? x0 - 256 : x0
         x1 = x1 > 127 ? x1 - 256 : x1
         
-        let array = addr.componentsSeparatedByString(".")
+        var array = [Int8].init(count: 4, repeatedValue: 0)
         
-        return (Int8(x0), Int8(x1),                                                 /// 端口号
-            Int8(array[0])!, Int8(array[1])!, Int8(array[2])!, Int8(array[3])!,     /// IP地址
-            0, 0, 0, 0, 0, 0, 0, 0)                                                 /// 对齐
+        var i = 0
+        
+        for value in addr.componentsSeparatedByString(".") {
+            
+            if (UInt8(value) != nil) {
+                
+                array[i] = UInt8(value)!.int8()
+            }
+            
+            i += 1
+        }
+        
+        return (Int8(x0), Int8(x1),                                 /// 端口号
+            array[0], array[1], array[2], array[3],                 /// IP地址
+            0, 0, 0, 0, 0, 0, 0, 0)                                 /// 对齐
     }
     
     class func data(data: (Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8)) -> (ip:String, port:UInt16)
@@ -544,7 +560,7 @@ class Address {
         x0 = (x0 < 0 ? x0 + 256 : x0) * 256
         x1 = x1 < 0 ? x1 + 256 : x1
         
-        return ("\(data.2).\(data.3).\(data.4).\(data.5)", UInt16(x0 + x1))
+        return ("\(data.2.uint8()).\(data.3.uint8()).\(data.4.uint8()).\(data.5.uint8())", UInt16(x0 + x1))
     }
     
     class func sockname(socket_id: Int32) -> (ip: String, port: UInt16) {
@@ -567,4 +583,60 @@ class Address {
         return address
     }
     
+    class func hostnameToIP(host: String) -> String? {
+        
+        var ip : String?
+        
+        let data = host.dataUsingEncoding(NSUTF8StringEncoding)
+        
+        if data != nil {
+            
+            var bytes = [Int8].init(count: data!.length, repeatedValue: 0x0)
+            data!.getBytes(&bytes, length: bytes.count)
+            
+            let hostname = gethostbyname(&bytes)
+            
+            if hostname != nil {
+                
+                var h = hostent()
+                memcpy(&h, hostname, strideofValue(h))
+                
+                if h.h_addr_list != nil {
+                    
+                    var addr = in_addr()
+                    memcpy(&addr, h.h_addr_list[0], strideofValue(addr))
+                    
+                    ip = String.fromCString(inet_ntoa(addr))
+                }
+            }
+        }
+        
+        return ip
+    }
+}
+
+extension UInt8 {
+    
+    func int8() -> Int8 {
+        
+        if self > 127 {
+            
+            return Int8(Int(self) - 256)
+        }
+        
+        return Int8(self)
+    }
+}
+
+extension Int8 {
+
+    func uint8() -> UInt8 {
+        
+        if self < 0 {
+            
+            return UInt8(Int(self) + 256)
+        }
+        
+        return UInt8(self)
+    }
 }
