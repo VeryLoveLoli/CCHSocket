@@ -8,21 +8,21 @@
 
 import Foundation
 
-enum SocketConnectType {
+public enum SocketConnectType {
     case TCP            ///< TCP
     case UDP            ///< UDP
 }
 
-class CCHSocket {
+public class CCHSocket {
     
     ///IP
-    var address_ip : String { return IP }
+    public var address_ip : String { return IP }
     ///端口
-    var address_port : UInt16 { return PORT }
+    public var address_port : UInt16 { return PORT }
     ///连接类型（TCP/UDP）
-    var connect_type : SocketConnectType { return TYPE }
+    public var connect_type : SocketConnectType { return TYPE }
     ///socket 状态
-    var socket_status : Int32 { return fcntl(socket_id, F_GETFL, 0)}
+    public var socket_status : Int32 { return fcntl(socket_id, F_GETFL, 0)}
     
     private var socket_id : Int32!
     private var IP : String!
@@ -40,7 +40,7 @@ class CCHSocket {
      
      - returns: CCHSocket
      */
-    init (ip: String, port: UInt16, connectType:SocketConnectType) {
+    public init (ip: String, port: UInt16, connectType:SocketConnectType) {
         
         IP = ip
         PORT = port
@@ -60,7 +60,7 @@ class CCHSocket {
      
      - returns: CCHSocket
      */
-    init (socketId: Int32, connectType:SocketConnectType) {
+    public init (socketId: Int32, connectType:SocketConnectType) {
         
         socket_id = socketId
         TYPE = connectType
@@ -78,7 +78,7 @@ class CCHSocket {
      
      - returns: socket_id
      */
-    func createSocket(connectType:SocketConnectType) -> Int32 {
+    public func createSocket(connectType:SocketConnectType) -> Int32 {
         
         switch connectType {
         case .TCP:
@@ -107,7 +107,7 @@ class CCHSocket {
      
      - returns: 绑定状态
      */
-    func bindAddress(ip: String, port: UInt16) -> Int32 {
+    public func bindAddress(ip: String, port: UInt16) -> Int32 {
         
         ///设置地址
         var addrress = Address.addressStringToSockaddr(IP, port: PORT)
@@ -140,7 +140,7 @@ class CCHSocket {
      
      - returns: 关闭状态
      */
-    func closeSocket() -> Int32 {
+    public func closeSocket() -> Int32 {
         
         let status = close(socket_id)
         
@@ -157,7 +157,7 @@ class CCHSocket {
     }
 }
 
-class CCHSocketTCP : CCHSocket {
+public class CCHSocketTCP : CCHSocket {
     
     /**
      初始化 CCHSocket
@@ -166,7 +166,7 @@ class CCHSocketTCP : CCHSocket {
      
      - returns: CCHSocket
      */
-    convenience init() {
+    public convenience init() {
         
         self.init(ip: "0.0.0.0", port: 0, connectType:.TCP)
     }
@@ -182,20 +182,20 @@ class CCHSocketTCP : CCHSocket {
      
      - returns: CCHSocket
      */
-    convenience init (ip: String, port: UInt16) {
+    public convenience init (ip: String, port: UInt16) {
         
         self.init(ip: ip, port: port, connectType:.TCP)
     }
 }
 
-class CCHSocketServer : CCHSocketTCP  {
+public class CCHSocketServer : CCHSocketTCP  {
     
     /**
      监听客户端连接(TCP)
      
      - parameter block: 客户端连接结果; client:客户端连接端
      */
-    func listeners(block: (client: CCHSocketClient)->Void ) -> Void {
+    public func listeners(block: (client: CCHSocketClient)->Void ) -> Void {
         
         dispatch_async(CCHSocketQueue.concurrent_queue, {
             
@@ -232,12 +232,12 @@ class CCHSocketServer : CCHSocketTCP  {
     
 }
 
-class CCHSocketClient: CCHSocketTCP {
+public class CCHSocketClient: CCHSocketTCP {
     
     /// 缓冲区大小
-    var buffer_max_length = 1024
+    public var buffer_max_length = 1024
     /// 失败重复发送次数
-    var repeat_number = 0
+    public var repeat_number = 0
     /// 连接的地址
     var connection_address : (ip: String, port: UInt16) { return Address.peername(socket_id)}
     
@@ -248,7 +248,7 @@ class CCHSocketClient: CCHSocketTCP {
      - parameter port: 端口
      - parameter block: 连接结果; status:连接状态 true=成功,false=失败; code:connection()函数的返回值
      */
-    func connection(ip: String, port: UInt16, block: (status:Bool, code:Int32)->Void) -> Void {
+    public func connection(ip: String, port: UInt16, block: (status:Bool, code:Int32)->Void) -> Void {
         
         dispatch_async(CCHSocketQueue.concurrent_queue) {
             
@@ -280,7 +280,7 @@ class CCHSocketClient: CCHSocketTCP {
      - parameter data: 发送的数据 NSData
      - parameter block: 发送结果; status:发送状态true=成功,false=失败;  code:send()函数的返回值
      */
-    func sendData(data: NSData, block: (status: Bool, code: Int)->Void) -> Void {
+    public func sendData(data: NSData, block: (status: Bool, code: Int)->Void) -> Void {
         
         dispatch_async(CCHSocketQueue.concurrent_queue) {
             
@@ -340,7 +340,7 @@ class CCHSocketClient: CCHSocketTCP {
      
      - parameter block: 读取到的结果; data:读取到的数据;    code:recv()函数的返回值
      */
-    func recvData(block: (data: NSData?, code: Int)->Void) -> Void {
+    public func recvData(block: (data: NSData?, code: Int)->Void) -> Void {
         
         dispatch_async(CCHSocketQueue.concurrent_queue, {
             
@@ -378,7 +378,7 @@ class CCHSocketClient: CCHSocketTCP {
     }
 }
 
-class CCHSocketUDP: CCHSocket {
+public class CCHSocketUDP: CCHSocket {
     
     /**
      初始化 CCHSocket
@@ -387,7 +387,7 @@ class CCHSocketUDP: CCHSocket {
      
      - returns: CCHSocket
      */
-    convenience init() {
+    public convenience init() {
         
         self.init(ip: "0.0.0.0", port: 0, connectType:.UDP)
     }
@@ -403,7 +403,7 @@ class CCHSocketUDP: CCHSocket {
      
      - returns: CCHSocket
      */
-    convenience init (ip: String, port: UInt16) {
+    public convenience init (ip: String, port: UInt16) {
         
         self.init(ip: ip, port: port, connectType:.UDP)
     }
@@ -416,7 +416,7 @@ class CCHSocketUDP: CCHSocket {
      - parameter data:  发送的数据 NSData
      - parameter block: 发送结果; status:发送状态true=成功,false=失败;  code:sendto()函数的返回值
      */
-    func sendtoData(ip: String, port: UInt16, data: NSData, block: (status: Bool, code: Int)->Void) -> Void {
+    public func sendtoData(ip: String, port: UInt16, data: NSData, block: (status: Bool, code: Int)->Void) -> Void {
         
         dispatch_async(CCHSocketQueue.concurrent_queue) {
             
@@ -453,7 +453,7 @@ class CCHSocketUDP: CCHSocket {
      - parameter port:      端口
      - parameter block:     读取到的结果; data:读取到的数据;    code:recvfrom()函数的返回值
      */
-    func recvfromData(length: Int, block: (ip: String, port: UInt16, data: NSData?, code: Int)->Void) -> Void {
+    public func recvfromData(length: Int, block: (ip: String, port: UInt16, data: NSData?, code: Int)->Void) -> Void {
         
         dispatch_async(CCHSocketQueue.concurrent_queue, {
             
@@ -496,20 +496,20 @@ class CCHSocketUDP: CCHSocket {
 }
 
 /// 队列
-struct CCHSocketQueue {
+public struct CCHSocketQueue {
     
     /// 串行队列
-    static let serial_queue = dispatch_queue_create("cch_scoket_serial_queue", DISPATCH_QUEUE_SERIAL)
+    public static let serial_queue = dispatch_queue_create("cch_scoket_serial_queue", DISPATCH_QUEUE_SERIAL)
     /// 并行队列
-    static let concurrent_queue = dispatch_queue_create("cch_scoket_concurrent_queue", DISPATCH_QUEUE_CONCURRENT)
+    public static let concurrent_queue = dispatch_queue_create("cch_scoket_concurrent_queue", DISPATCH_QUEUE_CONCURRENT)
     /// 任务组
-    static let group = dispatch_group_create()
+    public static let group = dispatch_group_create()
 }
 
 /// 地址
-class Address {
+public class Address {
     
-    class func addressStringToSockaddr(ip: String, port: UInt16) -> sockaddr
+    public class func addressStringToSockaddr(ip: String, port: UInt16) -> sockaddr
     {
         var address = sockaddr()
         memset(&address, 0, strideofValue(address))
@@ -520,12 +520,12 @@ class Address {
         return address
     }
     
-    class func sockaddrToAddressSring(addr: sockaddr) -> (ip: String, port: UInt16)
+    public class func sockaddrToAddressSring(addr: sockaddr) -> (ip: String, port: UInt16)
     {
         return self.data(addr.sa_data)
     }
     
-    class func data(addr: String, port: UInt16) -> (Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8)
+    private class func data(addr: String, port: UInt16) -> (Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8)
     {
         var x0 : Int = (Int(port) & 0b1111111100000000) >> 8
         var x1 : Int = (Int(port) & 0b0000000011111111)
@@ -552,7 +552,7 @@ class Address {
             0, 0, 0, 0, 0, 0, 0, 0)                                 /// 对齐
     }
     
-    class func data(data: (Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8)) -> (ip:String, port:UInt16)
+    private class func data(data: (Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8)) -> (ip:String, port:UInt16)
     {
         var x0 = Int(data.0)
         var x1 = Int(data.1)
@@ -563,7 +563,7 @@ class Address {
         return ("\(data.2.uint8()).\(data.3.uint8()).\(data.4.uint8()).\(data.5.uint8())", UInt16(x0 + x1))
     }
     
-    class func sockname(socket_id: Int32) -> (ip: String, port: UInt16) {
+    public class func sockname(socket_id: Int32) -> (ip: String, port: UInt16) {
     
         var addr = sockaddr()
         var len = socklen_t.init(16)
@@ -573,7 +573,7 @@ class Address {
         return address
     }
     
-    class func peername(socket_id: Int32) -> (ip: String, port: UInt16) {
+    public class func peername(socket_id: Int32) -> (ip: String, port: UInt16) {
     
         var addr = sockaddr()
         var len = socklen_t.init(16)
@@ -583,7 +583,7 @@ class Address {
         return address
     }
     
-    class func hostnameToIP(host: String) -> String? {
+    public class func hostnameToIP(host: String) -> String? {
         
         var ip : String?
         
@@ -617,7 +617,7 @@ class Address {
 
 extension UInt8 {
     
-    func int8() -> Int8 {
+    public func int8() -> Int8 {
         
         if self > 127 {
             
@@ -630,7 +630,7 @@ extension UInt8 {
 
 extension Int8 {
 
-    func uint8() -> UInt8 {
+    public func uint8() -> UInt8 {
         
         if self < 0 {
             
