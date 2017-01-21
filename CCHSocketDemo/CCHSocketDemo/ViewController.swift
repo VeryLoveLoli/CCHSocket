@@ -47,7 +47,7 @@ class ViewController: UIViewController {
                 if data != nil {
                     
                     print(client.connection_address)
-                    print(String.init(data: data!, encoding: NSUTF8StringEncoding))
+                    print(String.init(data: data!, encoding: String.Encoding.utf8) ?? <#default value#>)
                 }
             })
         }
@@ -62,7 +62,7 @@ class ViewController: UIViewController {
                 self.client.recvData({ (data, code) in
                     
                     print(self.client.connection_address)
-                    print(String.init(data: data!, encoding: NSUTF8StringEncoding))
+                    print(String.init(data: data!, encoding: String.Encoding.utf8) ?? <#default value#>)
                 })
             }
         }
@@ -76,7 +76,7 @@ class ViewController: UIViewController {
             if data != nil {
 
                 print("\(ip):\(port)")
-                print(String.init(data: data!, encoding: NSUTF8StringEncoding))
+                print(String.init(data: data!, encoding: String.Encoding.utf8) ?? <#default value#>)
             }
         }
         
@@ -86,7 +86,7 @@ class ViewController: UIViewController {
             if data != nil {
                 
                 print("\(ip):\(port)")
-                print(String.init(data: data!, encoding: NSUTF8StringEncoding))
+                print(String.init(data: data!, encoding: String.Encoding.utf8) ?? <#default value#>)
             }
         }
         
@@ -94,30 +94,30 @@ class ViewController: UIViewController {
     
     
     
-    @IBAction func serverSend(sender: UIButton) {
+    @IBAction func serverSend(_ sender: UIButton) {
         
-        server_1.sendData(server_text.text!.dataUsingEncoding(NSUTF8StringEncoding)!) { (status, code) in
+        server_1.sendData(server_text.text!.data(using: String.Encoding.utf8)!) { (status, code) in
             
         }
     }
 
-    @IBAction func clientSend(sender: UIButton) {
+    @IBAction func clientSend(_ sender: UIButton) {
         
-        client.sendData(client_text.text!.dataUsingEncoding(NSUTF8StringEncoding)!) { (status, code) in
+        client.sendData(client_text.text!.data(using: String.Encoding.utf8)!) { (status, code) in
             
         }
     }
     
-    @IBAction func udp1Send(sender: UIButton) {
+    @IBAction func udp1Send(_ sender: UIButton) {
         
-        UDP_1.sendtoData(UDP_2.address_ip, port: UDP_2.address_port, data: udp_1_text.text!.dataUsingEncoding(NSUTF8StringEncoding)!) { (status, code) in
+        UDP_1.sendtoData(UDP_2.address_ip, port: UDP_2.address_port, data: udp_1_text.text!.data(using: String.Encoding.utf8)!) { (status, code) in
             
         }
     }
     
-    @IBAction func udp2Send(sender: UIButton) {
+    @IBAction func udp2Send(_ sender: UIButton) {
         
-        UDP_2.sendtoData(UDP_1.address_ip, port: UDP_1.address_port, data: udp_2_text.text!.dataUsingEncoding(NSUTF8StringEncoding)!) { (status, code) in
+        UDP_2.sendtoData(UDP_1.address_ip, port: UDP_1.address_port, data: udp_2_text.text!.data(using: String.Encoding.utf8)!) { (status, code) in
             
         }
     }

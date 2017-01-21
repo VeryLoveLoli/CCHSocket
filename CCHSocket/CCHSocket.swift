@@ -9,25 +9,25 @@
 import Foundation
 
 public enum SocketConnectType {
-    case TCP            ///< TCP
-    case UDP            ///< UDP
+    case tcp            ///< TCP
+    case udp            ///< UDP
 }
 
-public class CCHSocket {
+open class CCHSocket {
     
     ///IP
-    public var address_ip : String { return IP }
+    open var address_ip : String { return IP }
     ///端口
-    public var address_port : UInt16 { return PORT }
+    open var address_port : UInt16 { return PORT }
     ///连接类型（TCP/UDP）
-    public var connect_type : SocketConnectType { return TYPE }
+    open var connect_type : SocketConnectType { return TYPE }
     ///socket 状态
-    public var socket_status : Int32 { return fcntl(socket_id, F_GETFL, 0)}
+    open var socket_status : Int32 { return fcntl(socket_id, F_GETFL, 0)}
     
-    private var socket_id : Int32!
-    private var IP : String!
-    private var PORT : UInt16!
-    private var TYPE : SocketConnectType!
+    fileprivate var socket_id : Int32!
+    fileprivate var IP : String!
+    fileprivate var PORT : UInt16!
+    fileprivate var TYPE : SocketConnectType!
     
     /**
      初始化 CCHSocket
@@ -48,7 +48,9 @@ public class CCHSocket {
         
         if self.createSocket(TYPE) != -1 {
             
-            self.bindAddress(IP, port: PORT)
+            if self.bindAddress(IP, port: PORT) == 0 {
+                
+            }
         }
     }
     
@@ -78,12 +80,12 @@ public class CCHSocket {
      
      - returns: socket_id
      */
-    public func createSocket(connectType:SocketConnectType) -> Int32 {
+    open func createSocket(_ connectType:SocketConnectType) -> Int32 {
         
         switch connectType {
-        case .TCP:
+        case .tcp:
             socket_id = socket(AF_INET, SOCK_STREAM, 0)
-        case .UDP:
+        case .udp:
             socket_id = socket(AF_INET, SOCK_DGRAM, 0)
         }
         
@@ -107,13 +109,13 @@ public class CCHSocket {
      
      - returns: 绑定状态
      */
-    public func bindAddress(ip: String, port: UInt16) -> Int32 {
+    open func bindAddress(_ ip: String, port: UInt16) -> Int32 {
         
         ///设置地址
         var addrress = Address.addressStringToSockaddr(IP, port: PORT)
         
         ///绑定地址
-        let status = bind(socket_id, &(addrress), UInt32(strideofValue(addrress)));
+        let status = bind(socket_id, &(addrress), UInt32(MemoryLayout.stride(ofValue: addrress)));
         
         if status == 0 {
             
@@ -140,7 +142,7 @@ public class CCHSocket {
      
      - returns: 关闭状态
      */
-    public func closeSocket() -> Int32 {
+    open func closeSocket() -> Int32 {
         
         let status = close(socket_id)
         
@@ -157,7 +159,7 @@ public class CCHSocket {
     }
 }
 
-public class CCHSocketTCP : CCHSocket {
+open class CCHSocketTCP : CCHSocket {
     
     /**
      初始化 CCHSocket
@@ -168,7 +170,7 @@ public class CCHSocketTCP : CCHSocket {
      */
     public convenience init() {
         
-        self.init(ip: "0.0.0.0", port: 0, connectType:.TCP)
+        self.init(ip: "0.0.0.0", port: 0, connectType:.tcp)
     }
     
     /**
@@ -184,20 +186,20 @@ public class CCHSocketTCP : CCHSocket {
      */
     public convenience init (ip: String, port: UInt16) {
         
-        self.init(ip: ip, port: port, connectType:.TCP)
+        self.init(ip: ip, port: port, connectType:.tcp)
     }
 }
 
-public class CCHSocketServer : CCHSocketTCP  {
+open class CCHSocketServer : CCHSocketTCP  {
     
     /**
      监听客户端连接(TCP)
      
      - parameter block: 客户端连接结果; client:客户端连接端
      */
-    public func listeners(block: (client: CCHSocketClient)->Void ) -> Void {
+    open func listeners(_ block: @escaping (_ client: CCHSocketClient)->Void ) -> Void {
         
-        dispatch_async(CCHSocketQueue.concurrent_queue, {
+        CCHSocketQueue.concurrent_queue.async(execute: {
             
             ///监听
             if listen(self.socket_id, INT32_MAX) == 0 {
@@ -219,7 +221,7 @@ public class CCHSocketServer : CCHSocketTCP  {
                         
                         let client = CCHSocketClient.init(socketId: client_id, connectType: self.TYPE)
                         
-                        block(client: client)
+                        block(client)
                     }
                 }
             }
@@ -232,12 +234,12 @@ public class CCHSocketServer : CCHSocketTCP  {
     
 }
 
-public class CCHSocketClient: CCHSocketTCP {
+open class CCHSocketClient: CCHSocketTCP {
     
     /// 缓冲区大小
-    public var buffer_max_length = 1024
+    open var buffer_max_length = 1024
     /// 失败重复发送次数
-    public var repeat_number = 0
+    open var repeat_number = 0
     /// 连接的地址
     var connection_address : (ip: String, port: UInt16) { return Address.peername(socket_id)}
     
@@ -248,14 +250,14 @@ public class CCHSocketClient: CCHSocketTCP {
      - parameter port: 端口
      - parameter block: 连接结果; status:连接状态 true=成功,false=失败; code:connection()函数的返回值
      */
-    public func connection(ip: String, port: UInt16, block: (status:Bool, code:Int32)->Void) -> Void {
+    open func connection(_ ip: String, port: UInt16, block: @escaping (_ status:Bool, _ code:Int32)->Void) -> Void {
         
-        dispatch_async(CCHSocketQueue.concurrent_queue) {
+        CCHSocketQueue.concurrent_queue.async {
             
             ///设置服务器地址
             var addrress = Address.addressStringToSockaddr(ip, port: port);
             //链接服务器
-            let status = connect(self.socket_id, &addrress, UInt32(strideofValue(addrress)))
+            let status = connect(self.socket_id, &addrress, UInt32(MemoryLayout.stride(ofValue: addrress)))
             
             if status == 0 {
                 
@@ -270,7 +272,7 @@ public class CCHSocketClient: CCHSocketTCP {
                 print("socket_id:\(self.socket_id) 连接 \(ip):\(port) 失败")
             }
             
-            block(status: status == 0, code: status)
+            block(status == 0, status)
         }
     }
     
@@ -280,9 +282,9 @@ public class CCHSocketClient: CCHSocketTCP {
      - parameter data: 发送的数据 NSData
      - parameter block: 发送结果; status:发送状态true=成功,false=失败;  code:send()函数的返回值
      */
-    public func sendData(data: NSData, block: (status: Bool, code: Int)->Void) -> Void {
+    open func sendData(_ data: Data, block: @escaping (_ status: Bool, _ code: Int)->Void) -> Void {
         
-        dispatch_async(CCHSocketQueue.concurrent_queue) {
+        CCHSocketQueue.concurrent_queue.async {
             
             var index = 0
             
@@ -294,11 +296,11 @@ public class CCHSocketClient: CCHSocketTCP {
             
             repeat {
                 
-                let len = min(data.length - index, self.buffer_max_length)
+                let len = min(data.count - index, self.buffer_max_length)
                 
-                let d = data.subdataWithRange(NSRange(location: index, length: len))
-                var bytes : [UInt8] = [UInt8](count: d.length, repeatedValue: 0x0)
-                d.getBytes(&bytes, length: bytes.count)
+                let d = data.subdata(in: index..<index+len)
+                var bytes : [UInt8] = [UInt8](repeating: 0x0, count: d.count)
+                (d as NSData).getBytes(&bytes, length: bytes.count)
                 
                 sendCode = send(self.socket_id, &bytes, len, 0)
                 
@@ -317,9 +319,9 @@ public class CCHSocketClient: CCHSocketTCP {
                     break
                 }
                 
-            } while index < data.length
+            } while index < data.count
             
-            dispatch_async(dispatch_get_main_queue(), {
+            DispatchQueue.main.async(execute: {
                 
                 if status {
                     
@@ -330,7 +332,7 @@ public class CCHSocketClient: CCHSocketTCP {
                     print("发送失败")
                 }
                 
-                block(status: status, code: sendCode)
+                block(status, sendCode)
             })
         }
     }
@@ -340,18 +342,18 @@ public class CCHSocketClient: CCHSocketTCP {
      
      - parameter block: 读取到的结果; data:读取到的数据;    code:recv()函数的返回值
      */
-    public func recvData(block: (data: NSData?, code: Int)->Void) -> Void {
+    open func recvData(_ block: @escaping (_ data: Data?, _ code: Int)->Void) -> Void {
         
-        dispatch_async(CCHSocketQueue.concurrent_queue, {
+        CCHSocketQueue.concurrent_queue.async(execute: {
             
             var recvCode : Int
             repeat {
                 
-                var bytes : [UInt8] = [UInt8](count: self.buffer_max_length, repeatedValue: 0x0)
+                var bytes : [UInt8] = [UInt8](repeating: 0x0, count: self.buffer_max_length)
                 
                 recvCode = recv(self.socket_id, &bytes, self.buffer_max_length, 0)
                 
-                var data : NSData?
+                var data : Data?
                 
                 if recvCode <= -1 {
                     
@@ -361,16 +363,18 @@ public class CCHSocketClient: CCHSocketTCP {
                     
                     print("socket_id:\(self.socket_id) 连接端已关闭")
                     
-                    self.closeSocket()
+                    if self.closeSocket() == 0 {
+                    
+                    }
                 }
                 else {
                     
-                    data = NSData.init(bytes: bytes, length: recvCode)
+                    data = Data.init(bytes: UnsafePointer<UInt8>(bytes), count: recvCode)
                 }
                 
-                dispatch_async(dispatch_get_main_queue(), {
+                DispatchQueue.main.async(execute: {
                     
-                    block(data: data, code: recvCode)
+                    block(data, recvCode)
                 })
                 
             } while recvCode > 0
@@ -378,7 +382,7 @@ public class CCHSocketClient: CCHSocketTCP {
     }
 }
 
-public class CCHSocketUDP: CCHSocket {
+open class CCHSocketUDP: CCHSocket {
     
     /**
      初始化 CCHSocket
@@ -389,7 +393,7 @@ public class CCHSocketUDP: CCHSocket {
      */
     public convenience init() {
         
-        self.init(ip: "0.0.0.0", port: 0, connectType:.UDP)
+        self.init(ip: "0.0.0.0", port: 0, connectType:.udp)
     }
     
     /**
@@ -405,7 +409,7 @@ public class CCHSocketUDP: CCHSocket {
      */
     public convenience init (ip: String, port: UInt16) {
         
-        self.init(ip: ip, port: port, connectType:.UDP)
+        self.init(ip: ip, port: port, connectType:.udp)
     }
     
     /**
@@ -416,20 +420,20 @@ public class CCHSocketUDP: CCHSocket {
      - parameter data:  发送的数据 NSData
      - parameter block: 发送结果; status:发送状态true=成功,false=失败;  code:sendto()函数的返回值
      */
-    public func sendtoData(ip: String, port: UInt16, data: NSData, block: (status: Bool, code: Int)->Void) -> Void {
+    open func sendtoData(_ ip: String, port: UInt16, data: Data, block: @escaping (_ status: Bool, _ code: Int)->Void) -> Void {
         
-        dispatch_async(CCHSocketQueue.concurrent_queue) {
+        CCHSocketQueue.concurrent_queue.async {
             
-            var bytes : [UInt8] = [UInt8](count: data.length, repeatedValue: 0x0)
-            data.getBytes(&bytes, length: bytes.count)
+            var bytes : [UInt8] = [UInt8](repeating: 0x0, count: data.count)
+            (data as NSData).getBytes(&bytes, length: bytes.count)
             
             var addr = Address.addressStringToSockaddr(ip, port: port)
             
-            let sendCode = sendto(self.socket_id, &bytes, bytes.count, 0, &addr, UInt32(strideofValue(addr)))
+            let sendCode = sendto(self.socket_id, &bytes, bytes.count, 0, &addr, UInt32(MemoryLayout.stride(ofValue: addr)))
             
             let status = sendCode > 0
             
-            dispatch_async(dispatch_get_main_queue(), {
+            DispatchQueue.main.async(execute: {
                 
                 if status {
                     
@@ -440,7 +444,7 @@ public class CCHSocketUDP: CCHSocket {
                     print("发送失败")
                 }
                 
-                block(status: status, code: sendCode)
+                block(status, sendCode)
             })
         }
     }
@@ -453,15 +457,15 @@ public class CCHSocketUDP: CCHSocket {
      - parameter port:      端口
      - parameter block:     读取到的结果; data:读取到的数据;    code:recvfrom()函数的返回值
      */
-    public func recvfromData(length: Int, block: (ip: String, port: UInt16, data: NSData?, code: Int)->Void) -> Void {
+    open func recvfromData(_ length: Int, block: @escaping (_ ip: String, _ port: UInt16, _ data: Data?, _ code: Int)->Void) -> Void {
         
-        dispatch_async(CCHSocketQueue.concurrent_queue, {
+        CCHSocketQueue.concurrent_queue.async(execute: {
             
             var recvCode : Int
             
             repeat {
                 
-                var bytes : [UInt8] = [UInt8](count: length, repeatedValue: 0x0)
+                var bytes : [UInt8] = [UInt8](repeating: 0x0, count: length)
                 
                 var addr = sockaddr()
                 var len = socklen_t.init(16)
@@ -470,7 +474,7 @@ public class CCHSocketUDP: CCHSocket {
                 
                 let address = Address.sockaddrToAddressSring(addr)
                 
-                var data : NSData?
+                var data : Data?
                 
                 if recvCode <= -1 {
                     
@@ -481,12 +485,12 @@ public class CCHSocketUDP: CCHSocket {
                     let address = Address.sockaddrToAddressSring(addr)
                     print("socket_id:\(self.socket_id) 接收到 \(address.ip):\(address.port) 的数据")
                     
-                    data = NSData.init(bytes: bytes, length: recvCode)
+                    data = Data.init(bytes: UnsafePointer<UInt8>(bytes), count: recvCode)
                 }
                 
-                dispatch_async(dispatch_get_main_queue(), {
+                DispatchQueue.main.async(execute: {
                     
-                    block(ip:address.ip, port: address.port, data: data, code: recvCode)
+                    block(address.ip, address.port, data, recvCode)
                 })
                 
             } while recvCode > 0
@@ -499,33 +503,33 @@ public class CCHSocketUDP: CCHSocket {
 public struct CCHSocketQueue {
     
     /// 串行队列
-    public static let serial_queue = dispatch_queue_create("cch_scoket_serial_queue", DISPATCH_QUEUE_SERIAL)
+    public static let serial_queue = DispatchQueue(label: "cch_scoket_serial_queue", attributes: [])
     /// 并行队列
-    public static let concurrent_queue = dispatch_queue_create("cch_scoket_concurrent_queue", DISPATCH_QUEUE_CONCURRENT)
+    public static let concurrent_queue = DispatchQueue(label: "cch_scoket_concurrent_queue", attributes: DispatchQueue.Attributes.concurrent)
     /// 任务组
-    public static let group = dispatch_group_create()
+    public static let group = DispatchGroup()
 }
 
 /// 地址
-public class Address {
+open class Address {
     
-    public class func addressStringToSockaddr(ip: String, port: UInt16) -> sockaddr
+    open class func addressStringToSockaddr(_ ip: String, port: UInt16) -> sockaddr
     {
         var address = sockaddr()
-        memset(&address, 0, strideofValue(address))
-        address.sa_len = UInt8(strideofValue(address))
+        memset(&address, 0, MemoryLayout.stride(ofValue: address))
+        address.sa_len = UInt8(MemoryLayout.stride(ofValue: address))
         address.sa_family = UInt8(AF_INET)
         address.sa_data = self.data(ip, port: port)
         
         return address
     }
     
-    public class func sockaddrToAddressSring(addr: sockaddr) -> (ip: String, port: UInt16)
+    open class func sockaddrToAddressSring(_ addr: sockaddr) -> (ip: String, port: UInt16)
     {
         return self.data(addr.sa_data)
     }
     
-    private class func data(addr: String, port: UInt16) -> (Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8)
+    fileprivate class func data(_ addr: String, port: UInt16) -> (Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8)
     {
         var x0 : Int = (Int(port) & 0b1111111100000000) >> 8
         var x1 : Int = (Int(port) & 0b0000000011111111)
@@ -533,11 +537,11 @@ public class Address {
         x0 = x0 > 127 ? x0 - 256 : x0
         x1 = x1 > 127 ? x1 - 256 : x1
         
-        var array = [Int8].init(count: 4, repeatedValue: 0)
+        var array = [Int8].init(repeating: 0, count: 4)
         
         var i = 0
         
-        for value in addr.componentsSeparatedByString(".") {
+        for value in addr.components(separatedBy: ".") {
             
             if (UInt8(value) != nil) {
                 
@@ -552,7 +556,7 @@ public class Address {
             0, 0, 0, 0, 0, 0, 0, 0)                                 /// 对齐
     }
     
-    private class func data(data: (Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8)) -> (ip:String, port:UInt16)
+    fileprivate class func data(_ data: (Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8)) -> (ip:String, port:UInt16)
     {
         var x0 = Int(data.0)
         var x1 = Int(data.1)
@@ -563,7 +567,7 @@ public class Address {
         return ("\(data.2.uint8()).\(data.3.uint8()).\(data.4.uint8()).\(data.5.uint8())", UInt16(x0 + x1))
     }
     
-    public class func sockname(socket_id: Int32) -> (ip: String, port: UInt16) {
+    open class func sockname(_ socket_id: Int32) -> (ip: String, port: UInt16) {
     
         var addr = sockaddr()
         var len = socklen_t.init(16)
@@ -573,7 +577,7 @@ public class Address {
         return address
     }
     
-    public class func peername(socket_id: Int32) -> (ip: String, port: UInt16) {
+    open class func peername(_ socket_id: Int32) -> (ip: String, port: UInt16) {
     
         var addr = sockaddr()
         var len = socklen_t.init(16)
@@ -583,30 +587,30 @@ public class Address {
         return address
     }
     
-    public class func hostnameToIP(host: String) -> String? {
+    open class func hostnameToIP(_ host: String) -> String? {
         
         var ip : String?
         
-        let data = host.dataUsingEncoding(NSUTF8StringEncoding)
+        let data = host.data(using: String.Encoding.utf8)
         
         if data != nil {
             
-            var bytes = [Int8].init(count: data!.length, repeatedValue: 0x0)
-            data!.getBytes(&bytes, length: bytes.count)
+            var bytes = [Int8].init(repeating: 0x0, count: data!.count)
+            (data! as NSData).getBytes(&bytes, length: bytes.count)
             
             let hostname = gethostbyname(&bytes)
             
             if hostname != nil {
                 
                 var h = hostent()
-                memcpy(&h, hostname, strideofValue(h))
+                memcpy(&h, hostname, MemoryLayout.stride(ofValue: h))
                 
                 if h.h_addr_list != nil {
                     
                     var addr = in_addr()
-                    memcpy(&addr, h.h_addr_list[0], strideofValue(addr))
+                    memcpy(&addr, h.h_addr_list[0], MemoryLayout.stride(ofValue: addr))
                     
-                    ip = String.fromCString(inet_ntoa(addr))
+                    ip = String(cString: inet_ntoa(addr))
                 }
             }
         }
